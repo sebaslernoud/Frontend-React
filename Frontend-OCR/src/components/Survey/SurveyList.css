@@ -1,6 +1,27 @@
+.survey-list-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+}
+
 .survey-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-  height: 100%;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+  flex: 1;
+}
+
+/* Para los botones de paginación */
+.survey-pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 16px;
+}
+
+.page-number.active {
+  background-color: #009ee3;
+  color: white;
+  border-radius: 4px;
 }

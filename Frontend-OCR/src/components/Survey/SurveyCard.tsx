@@ -4,6 +4,7 @@ import './SurveyCard.css';
 interface SurveyCardProps {
   title: string;
   description: string;
+  status: 'Pendiente' | 'Revisado';
 }
 
 export const SurveyCard: React.FC<SurveyCardProps> = ({ title, description }) => {
