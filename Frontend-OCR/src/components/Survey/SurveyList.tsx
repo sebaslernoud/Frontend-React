@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
+import { Grid, Box, Typography } from '@mui/material';
 import { SurveyCard } from './SurveyCard';
 import SurveyFilters from './SurveyFilter';
 import SurveyPagination from './SurveyPagination';
-import './SurveyList.css';
 
 interface SurveyItem {
   id: number;
@@ -13,14 +13,14 @@ interface SurveyItem {
 }
 
 const SurveyList = () => {
-  //Estados para filtros y paginación
+  // Estados para filtros y paginación
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [currentPage, setCurrentPage] = useState(1);
   
   const ITEMS_PER_PAGE = 16; 
 
-  //Mock de datos con nombres reales y estados mixtos
+  // Mock de datos con nombres reales y estados mixtos
   const allSurveys: SurveyItem[] = useMemo(() => {
     const families = [
       'García', 'Rodríguez', 'Pérez', 'López', 
@@ -29,7 +29,7 @@ const SurveyList = () => {
       'Acosta', 'Benítez', 'Castro', 'Ruiz'
     ];
     
-    // Generamos 40 elementos para que tengamos varias páginas de prueba
+    // Generamos 100 elementos para que tengamos varias páginas de prueba
     return Array.from({ length: 100 }, (_, i) => ({
       id: i + 1,
       familyName: `Familia ${families[i % families.length]}`,
@@ -40,11 +40,20 @@ const SurveyList = () => {
     }));
   }, []);
 
-  //LÓGICA DE FILTRADO (Se ejecuta cada vez que cambia el buscador o el select)
+  // LÓGICA DE FILTRADO (Se ejecuta cada vez que cambia el buscador o el select)
   const filteredSurveys = useMemo(() => {
-    // Volvemos a la página 1 si el usuario está filtrando para evitar quedar en una página vacía
+    const cleanSearch = searchTerm
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
     return allSurveys.filter((survey) => {
-      const matchesSearch = survey.familyName.toLowerCase().includes(searchTerm.toLowerCase()) || survey.date.includes(searchTerm);
+      const cleanFamilyName = survey.familyName
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+
+      const matchesSearch = cleanFamilyName.includes(cleanSearch) || survey.date.includes(searchTerm);
       const matchesStatus = statusFilter === 'Todos' || survey.status === statusFilter;
       
       return matchesSearch && matchesStatus;
@@ -55,7 +64,7 @@ const SurveyList = () => {
   const totalPages = Math.ceil(filteredSurveys.length / ITEMS_PER_PAGE) || 1;
   const safeCurrentPage = currentPage > totalPages ? 1 : currentPage;
 
-  // 5. LÓGICA DE PAGINACIÓN (Corta el array filtrado para mostrar solo 16 de esa página)
+  // LÓGICA DE PAGINACIÓN (Corta el array filtrado para mostrar solo 16 de esa página)
   const displayedSurveys = useMemo(() => {
     const startIndex = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
@@ -63,7 +72,7 @@ const SurveyList = () => {
   }, [filteredSurveys, safeCurrentPage]);
 
   return (
-    <div className="survey-list-wrapper">
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, width: '100%' }}>
       {/* Filtros arriba de la grilla */}
       <SurveyFilters 
         searchTerm={searchTerm}
@@ -73,27 +82,42 @@ const SurveyList = () => {
       />
 
       {/* Grilla de Tarjetas */}
-      <div className="survey-grid">
+      <Grid container spacing={2.5}>
         {displayedSurveys.map((survey) => (
-          <SurveyCard
-            key={survey.id}
-            title={survey.familyName}
-            description={survey.date}
-            status={survey.status}
-          />
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={survey.id}>
+            <SurveyCard
+              id={survey.id}
+              title={survey.familyName}
+              description={survey.date}
+              status={survey.status}
+            />
+          </Grid>
         ))}
-        {displayedSurveys.length === 0 && (
-          <p className="no-results">No se encontraron encuestas que coincidan.</p>
-        )}
-      </div>
+      </Grid>
+
+      {displayedSurveys.length === 0 && (
+        <Box sx={{ width: '100%', py: 8, display: 'flex', justifyContent: 'center' }}>
+          <Typography 
+            variant="body1" 
+            sx={{ 
+              color: 'text.secondary', 
+              fontSize: '16px' 
+            }}
+          >
+            No se encontraron encuestas que coincidan.
+          </Typography>
+        </Box>
+      )}
 
       {/* Paginado abajo de la grilla */}
-      <SurveyPagination 
-        currentPage={safeCurrentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
-    </div>
+      {totalPages > 1 && (
+        <SurveyPagination 
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      )}
+    </Box>
   );
 };
 

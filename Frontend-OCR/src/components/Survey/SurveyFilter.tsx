@@ -1,5 +1,6 @@
 import React from 'react';
-import './SurveyFilter.css'; 
+import { Box, TextField, Select, MenuItem, FormControl, InputAdornment } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
 
 interface SurveyFiltersProps {
   searchTerm: string;
@@ -15,30 +16,64 @@ const SurveyFilters: React.FC<SurveyFiltersProps> = ({
   onStatusChange,
 }) => {
   return (
-    <div className="survey-filters-container">
+    <Box 
+      sx={{ 
+        display: 'flex', 
+        gap: 2, 
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        mb: 2,
+        width: '100%'
+      }}
+    >
       {/* Buscador */}
-      <div className="search-input-wrapper">
-        <span className="search-icon">🔍</span>
-        <input
-          type="text"
-          placeholder="Buscar familia o fecha..."
-          value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="search-input"
-        />
-      </div>
+      <TextField
+        value={searchTerm}
+        onChange={(e) => onSearchChange(e.target.value)}
+        placeholder="Buscar familia o fecha..."
+        size="small"
+        sx={{ 
+          flexGrow: 1,
+          maxWidth: { xs: '100%', sm: 400 },
+          backgroundColor: '#FFFFFF'
+        }}
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: 'text.secondary' }} />
+              </InputAdornment>
+            ),
+          },
+        }}
+      />
 
       {/* Selector de Estado */}
-      <select
-        value={statusFilter}
-        onChange={(e) => onStatusChange(e.target.value)}
-        className="status-select"
+      <FormControl 
+        size="small" 
+        sx={{ 
+          minWidth: 160,
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 1,
+            backgroundColor: '#FFFFFF',
+          }
+        }}
       >
-        <option value="Todos">Todos</option>
-        <option value="Pendiente">Pendiente</option>
-        <option value="Revisado">Revisado</option>
-      </select>
-    </div>
+        <Select
+          value={statusFilter}
+          onChange={(e) => onStatusChange(e.target.value as string)}
+          displayEmpty
+          sx={{
+            fontSize: '14px',
+            color: 'text.primary'
+          }}
+        >
+          <MenuItem value="Todos" sx={{ fontSize: '14px' }}>Todos los estados</MenuItem>
+          <MenuItem value="Pendiente" sx={{ fontSize: '14px' }}>Pendiente</MenuItem>
+          <MenuItem value="Revisado" sx={{ fontSize: '14px' }}>Revisado</MenuItem>
+        </Select>
+      </FormControl>
+    </Box>
   );
 };
 
