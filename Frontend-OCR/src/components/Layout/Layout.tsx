@@ -2,20 +2,16 @@ import React from 'react';
 import { Sidebar } from '../Sidebar/Sidebar';
 import { Header } from '../Header/Header';
 import styles from './Layout.module.css';
+import { Outlet } from 'react-router-dom';
 
-interface LayoutProps {
-  children: React.ReactNode;
-  onSelectTab?: (tab: string) => void;
-}
-
-export const Layout: React.FC<LayoutProps> = ({ children, onSelectTab }) => {
+export const Layout: React.FC = () => {
   return (
     <div className={styles.layoutContainer}>
-      <Sidebar onSelectTab={onSelectTab} />
+      <Sidebar />
       <div className={styles.mainWrapper}>
         <Header />
         <main className={styles.content}>
-          {children}
+          <Outlet />
         </main>
       </div>
     </div>

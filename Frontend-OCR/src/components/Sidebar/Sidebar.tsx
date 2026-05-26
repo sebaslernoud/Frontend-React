@@ -1,41 +1,32 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { NavLink } from 'react-router-dom';
 import { FiFileText, FiUsers, FiBarChart2, FiSettings, FiLogOut } from 'react-icons/fi';
 import styles from './Sidebar.module.css';
 
-interface SidebarProps {
-  onSelectTab?: (tab: string) => void;
-}
-
-export const Sidebar: React.FC<SidebarProps> = ({ onSelectTab }) => {
-  const [activeTab, setActiveTab] = useState('Encuestas');
-
+export const Sidebar: React.FC = () => {
   const menuItems = [
-    { id: 'Encuestas', label: 'Encuestas', icon: <FiFileText className={styles.icon} /> },
-    { id: 'Familias', label: 'Familias', icon: <FiUsers className={styles.icon} /> },
-    { id: 'Reportes', label: 'Reportes', icon: <FiBarChart2 className={styles.icon} /> },
-    { id: 'Configuracion', label: 'Configuracion', icon: <FiSettings className={styles.icon} /> },
+    { path: '/encuestas', label: 'Encuestas', icon: <FiFileText className={styles.icon} /> },
+    { path: '/familias', label: 'Familias', icon: <FiUsers className={styles.icon} /> },
+    { path: '/reportes', label: 'Reportes', icon: <FiBarChart2 className={styles.icon} /> },
+    { path: '/configuracion', label: 'Configuracion', icon: <FiSettings className={styles.icon} /> },
   ];
-
-  const handleTabClick = (tabId: string) => {
-    setActiveTab(tabId);
-    if (onSelectTab) onSelectTab(tabId);
-  };
 
   return (
     <aside className={styles.sidebar}>
       {/* menu buttons */}
       <div className={styles.menuContainer}>
         {menuItems.map((item) => {
-          const isActive = activeTab === item.id;
           return (
-            <button
-              key={item.id}
-              className={`${styles.menuButton} ${isActive ? styles.activeButton : styles.inactiveButton}`}
-              onClick={() => handleTabClick(item.id)}
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) =>
+                `${styles.menuButton} ${isActive ? styles.activeButton : styles.inactiveButton}`
+              }
             >
               {item.icon}
               <span className={styles.label}>{item.label}</span>
-            </button>
+            </NavLink>
           );
         })}
       </div>

@@ -1,26 +1,24 @@
-import { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout/Layout';
-import SurveyList from './components/Survey/SurveyList';
+import { SurveysPage } from './pages/SurveysPage';
+import { FamiliesPage } from './pages/FamiliesPage';
+import { ReportsPage } from './pages/ReportsPage';
+import { SettingsPage } from './pages/SettingsPage';
 import './App.css';
 
 function App() {
-  const [currentTab, setCurrentTab] = useState('Encuestas');
-
   return (
-    <Layout onSelectTab={setCurrentTab}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <h1 style={{ margin: 0, fontSize: '28px', color: 'var(--color-text-dark)', fontFamily: 'var(--font-family)', fontWeight: 700 }}>
-          {currentTab === 'Encuestas' ? 'Encuestas pendientes de revisión' : currentTab}
-        </h1>
-        {currentTab === 'Encuestas' ? (
-          <SurveyList />
-        ) : (
-          <p style={{ margin: 0, color: 'var(--color-text-muted)', fontFamily: 'var(--font-family)' }}>
-            Contenido de la sección {currentTab}.
-          </p>
-        )}
-      </div>
-    </Layout>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<Navigate to="/encuestas" replace />} />
+          <Route path="/encuestas" element={<SurveysPage />} />
+          <Route path="/familias" element={<FamiliesPage />} />
+          <Route path="/reportes" element={<ReportsPage />} />
+          <Route path="/configuracion" element={<SettingsPage />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
 
