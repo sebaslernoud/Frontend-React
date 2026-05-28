@@ -1,117 +1,88 @@
+// src/components/Survey/SurveyList.tsx
 import { useState, useMemo } from 'react';
-import { Grid, Box, Typography } from '@mui/material';
+import { Grid, Box, Typography, CircularProgress, Alert } from '@mui/material';
 import { SurveyCard } from './SurveyCard';
 import SurveyFilters from './SurveyFilter';
 import SurveyPagination from './SurveyPagination';
+import { useRelevamientos } from '../../hooks/useRelevamientos';
+import { formatFecha} from '../../services/airTableService';
 
-interface SurveyItem {
-  id: number;
-  familyName: string;
-  date: string;
-  status: 'Pendiente' | 'Revisado';
-  fileType: string;
-}
+const ITEMS_PER_PAGE = 16;
 
 const SurveyList = () => {
-  // Estados para filtros y paginación
-  const [searchTerm, setSearchTerm] = useState('');
+  const { data, loading, error } = useRelevamientos();
+
+  const [searchTerm, setSearchTerm]     = useState('');
   const [statusFilter, setStatusFilter] = useState('Todos');
-  const [currentPage, setCurrentPage] = useState(1);
-  
-  const ITEMS_PER_PAGE = 16; 
+  const [currentPage, setCurrentPage]   = useState(1);
 
-  // Mock de datos con nombres reales y estados mixtos
-  const allSurveys: SurveyItem[] = useMemo(() => {
-    const families = [
-      'García', 'Rodríguez', 'Pérez', 'López', 
-      'Martínez', 'Fernández', 'González', 'Sánchez', 
-      'Díaz', 'Torres', 'Ramírez', 'Flores', 
-      'Acosta', 'Benítez', 'Castro', 'Ruiz'
-    ];
-    
-    // Generamos 100 elementos para que tengamos varias páginas de prueba
-    return Array.from({ length: 100 }, (_, i) => ({
-      id: i + 1,
-      familyName: `Familia ${families[i % families.length]}`,
-      date: '12/05/2026',
-      // Alternamos estados para probar los filtros
-      status: i % 3 === 0 ? 'Revisado' : 'Pendiente', 
-      fileType: 'PDF'
-    }));
-  }, []);
-
-  // LÓGICA DE FILTRADO (Se ejecuta cada vez que cambia el buscador o el select)
   const filteredSurveys = useMemo(() => {
-    const cleanSearch = searchTerm
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
+    const clean = (s: string) =>
+      s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-    return allSurveys.filter((survey) => {
-      const cleanFamilyName = survey.familyName
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
-
-      const matchesSearch = cleanFamilyName.includes(cleanSearch) || survey.date.includes(searchTerm);
-      const matchesStatus = statusFilter === 'Todos' || survey.status === statusFilter;
-      
-      return matchesSearch && matchesStatus;
+    return data.filter((r) => {
+      const texto = `${r.json_completo?.p1_familia ?? ''} ${r.direccion ?? ''} ${r.barrio_zona ?? ''} ${r.fecha_de_carga ?? ''} ${formatFecha(r.fecha_de_carga)}`;
+      const matchSearch = clean(texto).includes(clean(searchTerm));
+      // Por ahora todos son "Pendiente" hasta que implementemos estado de revisión
+      const matchStatus = statusFilter === 'Todos' || statusFilter === 'Pendiente';
+      return matchSearch && matchStatus;
     });
-  }, [allSurveys, searchTerm, statusFilter]);
+  }, [data, searchTerm, statusFilter]);
 
-  // Al mutar los filtros, si la página actual quedó fuera de rango, la reseteamos
-  const totalPages = Math.ceil(filteredSurveys.length / ITEMS_PER_PAGE) || 1;
+  const totalPages     = Math.ceil(filteredSurveys.length / ITEMS_PER_PAGE) || 1;
   const safeCurrentPage = currentPage > totalPages ? 1 : currentPage;
 
-  // LÓGICA DE PAGINACIÓN (Corta el array filtrado para mostrar solo 16 de esa página)
-  const displayedSurveys = useMemo(() => {
-    const startIndex = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return filteredSurveys.slice(startIndex, endIndex);
+  const displayed = useMemo(() => {
+    const start = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+    return filteredSurveys.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredSurveys, safeCurrentPage]);
+
+  if (loading) return (
+    <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+      <CircularProgress />
+    </Box>
+  );
+
+  if (error) return (
+    <Alert severity="error">Error al cargar encuestas: {error}</Alert>
+  );
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, width: '100%' }}>
-      {/* Filtros arriba de la grilla */}
-      <SurveyFilters 
+      <SurveyFilters
         searchTerm={searchTerm}
-        onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+        onSearchChange={(v) => { setSearchTerm(v); setCurrentPage(1); }}
         statusFilter={statusFilter}
-        onStatusChange={(val) => { setStatusFilter(val); setCurrentPage(1); }}
+        onStatusChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}
       />
 
-      {/* Grilla de Tarjetas */}
       <Grid container spacing={2.5}>
-        {displayedSurveys.map((survey) => (
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={survey.id}>
+        {displayed.map((r) => (
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={r._id}>
             <SurveyCard
-              id={survey.id}
-              title={survey.familyName}
-              description={survey.date}
-              status={survey.status}
+              id={r._id}             // ← ahora es el ID real de Airtable
+              title={
+                  r.json_completo?.p1_familia?.trim() || 
+                  r.json_completo?.p4_familia?.trim() || 
+                  'Sin nombre'
+                }
+              description={`${r.barrio_zona ?? 'sin barrio'} · ${formatFecha(r.fecha_de_carga) ?? 'sin fecha de carga'}`}
+              status="Pendiente"
             />
           </Grid>
         ))}
       </Grid>
 
-      {displayedSurveys.length === 0 && (
+      {displayed.length === 0 && (
         <Box sx={{ width: '100%', py: 8, display: 'flex', justifyContent: 'center' }}>
-          <Typography 
-            variant="body1" 
-            sx={{ 
-              color: 'text.secondary', 
-              fontSize: '16px' 
-            }}
-          >
+          <Typography variant="body1" sx={{ color: 'text.secondary' }}>
             No se encontraron encuestas que coincidan.
           </Typography>
         </Box>
       )}
 
-      {/* Paginado abajo de la grilla */}
       {totalPages > 1 && (
-        <SurveyPagination 
+        <SurveyPagination
           currentPage={safeCurrentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}

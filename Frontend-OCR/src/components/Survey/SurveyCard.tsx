@@ -3,7 +3,7 @@ import { Card, CardContent, Typography, Button, Box, Chip } from '@mui/material'
 import { Link } from 'react-router-dom';
 
 interface SurveyCardProps {
-  id: number;
+  id: string;
   title: string;
   description: string;
   status: 'Pendiente' | 'Revisado';
