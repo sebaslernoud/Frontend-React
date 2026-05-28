@@ -36,7 +36,6 @@ function aplanarRegistro(record: any): Relevamiento {
     prioridad:            f['Prioridad']             ?? null,
     personas_en_vivienda: f['Personas en vivienda']  ?? null,
     tiene_bano:           f['Tiene baño']            ?? null,
-    // json_completo:        f['JSON completo']          ?? null,
     json_completo: (() => {
     const raw = f['JSON completo'];
         if (!raw) return null;
