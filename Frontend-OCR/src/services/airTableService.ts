@@ -90,3 +90,18 @@ export function formatFecha(fechaRaw: string | null): string {
     year: 'numeric',
   });
 }
+
+export async function updateRelevamiento(id: string, fields: Record<string, any>): Promise<Relevamiento> {
+  const res = await fetch(`${BASE_URL}/${id}`, {
+    method: 'PATCH',
+    headers: HEADERS,
+    body: JSON.stringify({ fields }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(`Airtable error: ${err.error?.message ?? res.status}`);
+  }
+
+  return aplanarRegistro(await res.json());
+}

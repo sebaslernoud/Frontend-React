@@ -11,7 +11,8 @@ import SurveySummaryCard from '../components/Survey/SurveySummaryCard';
 import DocumentViewer from '../components/Survey/DocumentViewer';
 import TranscriptionForm, { type TranscriptionFormData } from '../components/Survey/TranscriptionForm';
 import { useRelevamientoById } from '../hooks/useRelevamientos';
-
+import { updateRelevamiento } from '../services/airTableService'
+;
 export const ReviewSurveyPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -22,6 +23,8 @@ export const ReviewSurveyPage: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastSeverity, setToastSeverity] = useState<'success' | 'info' | 'error'>('success');
 
+  const [saving, setSaving] = useState(false);
+  
   const [formData, setFormData] = useState<TranscriptionFormData>({
     barrio:                '',
     fecha:                 '',
@@ -61,7 +64,45 @@ export const ReviewSurveyPage: React.FC = () => {
     setToastMessage(msg);
     setToastSeverity(severity);
     setShowToast(true);
-    setTimeout(() => navigate('/encuestas'), 1500);
+    // setTimeout(() => navigate('/encuestas'), 1500);
+  };
+
+  const handleSave = async (mensaje: string, severity: 'success' | 'info' | 'error') => {
+    if (!id || !data) return;
+    setSaving(true);
+    try {
+      // Mezclamos el JSON original con los cambios del formulario
+      const jsonActualizado = {
+        ...data.json_completo,
+        p1_barrio_zona:           formData.barrio,
+        p1_conexion_ms:           formData.eliminacionTipo,
+        p3_barrio_zona:           formData.barrio,
+        p3_terreno_de_quien:      formData.propietario,
+        p3_terreno_anios_viviendo: formData.antiguedad,
+        p3_tienen_electricidad:   formData.electricidad,
+        p3_terreno_inundable:     formData.inundable,
+        p3_terreno_espacio_construir: formData.espacioConstruir,
+        p3_pozo_profundidad:      formData.eliminacionProfundidad,
+        p3_pozo_esta_calzado:     formData.eliminacionCalzado,
+      };
+
+      await updateRelevamiento(data._id, {
+        'Barrio/Zona':    formData.barrio,
+        'Prioridad':      prioridad.toLowerCase(),
+        'JSON completo':  JSON.stringify(jsonActualizado),
+      });
+
+      setToastMessage(mensaje);
+      setToastSeverity(severity);
+      setShowToast(true);
+      // setTimeout(() => navigate('/encuestas'), 1500);
+    } catch (err: any) {
+      setToastMessage(`Error al guardar: ${err.message}`);
+      setToastSeverity('error');
+      setShowToast(true);
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) return (
@@ -136,10 +177,12 @@ export const ReviewSurveyPage: React.FC = () => {
         }}>
           <TranscriptionForm
             formData={formData}
+            saving={saving}
             onInputChange={handleInputChange}
-            onApprove={() => showFeedback('Encuesta revisada y aprobada con éxito', 'success')}
-            onSaveDraft={() => showFeedback('Borrador guardado correctamente', 'info')}
+            onApprove={() => handleSave('Encuesta aprobada con éxito', 'success')}
+            onSaveDraft={() => handleSave('Borrador guardado correctamente', 'info')}
             onReject={() => showFeedback('Encuesta rechazada', 'error')}
+            
           />
         </Grid>
       </Grid>

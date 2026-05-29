@@ -11,6 +11,7 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import SaveIcon from '@mui/icons-material/Save';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
+import {CircularProgress } from '@mui/material';
 
 export interface TranscriptionFormData {
   barrio: string;
@@ -31,6 +32,7 @@ export interface TranscriptionFormProps {
   onApprove: () => void;
   onSaveDraft: () => void;
   onReject: () => void;
+  saving?: boolean;
 }
 
 export const TranscriptionForm: React.FC<TranscriptionFormProps> = ({
@@ -38,7 +40,8 @@ export const TranscriptionForm: React.FC<TranscriptionFormProps> = ({
   onInputChange,
   onApprove,
   onSaveDraft,
-  onReject
+  onReject,
+  saving = false,
 }) => {
   return (
     <Card 
@@ -244,6 +247,7 @@ export const TranscriptionForm: React.FC<TranscriptionFormProps> = ({
           color="success" 
           startIcon={<CheckCircleIcon />}
           onClick={onApprove}
+          disabled={saving}
           sx={{ 
             flexGrow: 1, 
             fontWeight: 700,
@@ -252,7 +256,7 @@ export const TranscriptionForm: React.FC<TranscriptionFormProps> = ({
             borderRadius: 1
           }}
         >
-          Guardar y Aprobar
+          {saving ? 'Guardando...' : 'Guardar y Aprobar'}
         </Button>
 
         <Button 
