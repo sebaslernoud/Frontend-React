@@ -23,6 +23,7 @@ export interface Relevamiento {
   json_completo:        any | null;
   fecha_de_carga:       string | null;
   ultima_modificacion:  string | null;
+  estado:               string | null;
 }
 
 function aplanarRegistro(record: any): Relevamiento {
@@ -44,6 +45,7 @@ function aplanarRegistro(record: any): Relevamiento {
     })(),
     fecha_de_carga:       f['Fecha de carga']         ?? null,
     ultima_modificacion:  f['Última modificación']    ?? null,
+    estado:               f['Estado'] ?? null,
   };
 }
 

@@ -6,7 +6,7 @@ interface SurveyCardProps {
   id: string;
   title: string;
   description: string;
-  status: 'Pendiente' | 'Revisado';
+  status: 'Pendiente' | 'Revisado' | 'Rechazado';
 }
 
 export const SurveyCard: React.FC<SurveyCardProps> = ({ id, title, description, status }) => {
@@ -41,7 +41,7 @@ export const SurveyCard: React.FC<SurveyCardProps> = ({ id, title, description, 
           </Typography>
           <Chip 
             label={status} 
-            color={status === 'Revisado' ? 'success' : 'warning'} 
+            color={status === 'Revisado' ? 'success' : status === 'Rechazado' ? 'error' : 'warning'}
             size="small"
             sx={{ 
               fontWeight: 600, 

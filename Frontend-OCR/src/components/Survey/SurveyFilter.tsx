@@ -71,6 +71,7 @@ const SurveyFilters: React.FC<SurveyFiltersProps> = ({
           <MenuItem value="Todos" sx={{ fontSize: '14px' }}>Todos los estados</MenuItem>
           <MenuItem value="Pendiente" sx={{ fontSize: '14px' }}>Pendiente</MenuItem>
           <MenuItem value="Revisado" sx={{ fontSize: '14px' }}>Revisado</MenuItem>
+          <MenuItem value="Rechazado" sx={{ fontSize: '14px' }}>Rechazado</MenuItem>
         </Select>
       </FormControl>
     </Box>

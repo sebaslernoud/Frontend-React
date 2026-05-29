@@ -24,7 +24,7 @@ export const ReviewSurveyPage: React.FC = () => {
   const [toastSeverity, setToastSeverity] = useState<'success' | 'info' | 'error'>('success');
 
   const [saving, setSaving] = useState(false);
-  
+
   const [formData, setFormData] = useState<TranscriptionFormData>({
     barrio:                '',
     fecha:                 '',
@@ -67,7 +67,7 @@ export const ReviewSurveyPage: React.FC = () => {
     // setTimeout(() => navigate('/encuestas'), 1500);
   };
 
-  const handleSave = async (mensaje: string, severity: 'success' | 'info' | 'error') => {
+  const handleSave = async (mensaje: string, severity: 'success' | 'info' | 'error', estado: string = 'Pendiente') => {
     if (!id || !data) return;
     setSaving(true);
     try {
@@ -85,10 +85,17 @@ export const ReviewSurveyPage: React.FC = () => {
         p3_pozo_profundidad:      formData.eliminacionProfundidad,
         p3_pozo_esta_calzado:     formData.eliminacionCalzado,
       };
-
+      console.log('fields a enviar:', {
+        'Estado': estado,
+      });
       await updateRelevamiento(data._id, {
         'Barrio/Zona':    formData.barrio,
         'Prioridad':      prioridad.toLowerCase(),
+        'Fecha': (() => {
+          const [dia, mes, anio] = formData.fecha.split('/');
+          return new Date(Number(anio), Number(mes) - 1, Number(dia)).toISOString();
+        })(),
+        'Estado':        estado, 
         'JSON completo':  JSON.stringify(jsonActualizado),
       });
 
@@ -179,9 +186,9 @@ export const ReviewSurveyPage: React.FC = () => {
             formData={formData}
             saving={saving}
             onInputChange={handleInputChange}
-            onApprove={() => handleSave('Encuesta aprobada con éxito', 'success')}
+            onApprove={() => handleSave('Encuesta aprobada con éxito', 'success', 'Revisado')}
             onSaveDraft={() => handleSave('Borrador guardado correctamente', 'info')}
-            onReject={() => showFeedback('Encuesta rechazada', 'error')}
+            onReject={() => handleSave('Encuesta rechazada', 'error', 'Rechazado')}
             
           />
         </Grid>

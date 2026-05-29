@@ -24,7 +24,8 @@ const SurveyList = () => {
       const texto = `${r.json_completo?.p1_familia ?? ''} ${r.direccion ?? ''} ${r.barrio_zona ?? ''} ${r.fecha_de_carga ?? ''} ${formatFecha(r.fecha_de_carga)}`;
       const matchSearch = clean(texto).includes(clean(searchTerm));
       // Por ahora todos son "Pendiente" hasta que implementemos estado de revisión
-      const matchStatus = statusFilter === 'Todos' || statusFilter === 'Pendiente';
+      const matchStatus = statusFilter === 'Todos' || r.estado === statusFilter || 
+        (statusFilter === 'Pendiente' && !r.estado);
       return matchSearch && matchStatus;
     });
   }, [data, searchTerm, statusFilter]);
@@ -67,7 +68,11 @@ const SurveyList = () => {
                   'Sin nombre'
                 }
               description={`${r.barrio_zona ?? 'sin barrio'} · ${formatFecha(r.fecha_de_carga) ?? 'sin fecha de carga'}`}
-              status="Pendiente"
+              status={
+                r.estado === 'Revisado' ? 'Revisado' :
+                r.estado === 'Rechazado' ? 'Rechazado' :
+                'Pendiente'
+              }
             />
           </Grid>
         ))}
