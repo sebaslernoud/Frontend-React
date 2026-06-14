@@ -21,7 +21,7 @@ const SurveyList = () => {
       s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
     return data.filter((r) => {
-      const texto = `${r.json_completo?.p1_familia ?? ''} ${r.direccion ?? ''} ${r.barrio_zona ?? ''} ${r.fecha_de_carga ?? ''} ${formatFecha(r.fecha_de_carga)}`;
+      const texto = `${r.campos?.p1_familia ?? ''} ${r.campos?.p4_familia ?? ''} ${r.direccion ?? ''} ${r.barrio_zona ?? ''} ${r.fecha_de_carga ?? ''} ${formatFecha(r.fecha_de_carga)}`;
       const matchSearch = clean(texto).includes(clean(searchTerm));
       // Por ahora todos son "Pendiente" hasta que implementemos estado de revisión
       const matchStatus = statusFilter === 'Todos' || r.estado === statusFilter || 
@@ -63,11 +63,11 @@ const SurveyList = () => {
             <SurveyCard
               id={r._id}             // ← ahora es el ID real de Airtable
               title={
-                  r.json_completo?.p1_familia?.trim() || 
-                  r.json_completo?.p4_familia?.trim() || 
+                  r.campos?.p1_familia?.trim() ||
+                  r.campos?.p4_familia?.trim() ||
                   'Sin nombre'
                 }
-              description={`${r.barrio_zona ?? 'sin barrio'} · ${formatFecha(r.fecha_de_carga) ?? 'sin fecha de carga'}`}
+              description={`${r.campos?.p1_barrio_zona ?? 'sin barrio'} · ${formatFecha(r.campos?.fecha_subida) ?? 'sin fecha'}`}
               status={
                 r.estado === 'Revisado' ? 'Revisado' :
                 r.estado === 'Rechazado' ? 'Rechazado' :
