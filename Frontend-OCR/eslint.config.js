@@ -17,6 +17,7 @@ export default defineConfig([
     ],
     rules: {
       semi: ['warn', 'always'],
+      '@typescript-eslint/no-explicit-any': 'off',
     },
     languageOptions: {
       globals: globals.browser,
