@@ -4,13 +4,13 @@ import { Grid, Box, Typography, CircularProgress, Alert } from '@mui/material';
 import { SurveyCard } from './SurveyCard';
 import SurveyFilters from './SurveyFilter';
 import SurveyPagination from './SurveyPagination';
-import { useRelevamientos } from '../../hooks/useRelevamientos';
-import { formatFecha} from '../../services/airTableService';
+import { useRelevamientosPreview } from '../../hooks/useRelevamientos';
+import { formatFecha } from '../../services/airTableService';
 
 const ITEMS_PER_PAGE = 16;
 
 const SurveyList = () => {
-  const { data, loading, error } = useRelevamientos();
+  const { data, loading, error } = useRelevamientosPreview();
 
   const [searchTerm, setSearchTerm]     = useState('');
   const [statusFilter, setStatusFilter] = useState('Todos');
@@ -21,16 +21,15 @@ const SurveyList = () => {
       s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
     return data.filter((r) => {
-      const texto = `${r.campos?.p1_familia ?? ''} ${r.campos?.p4_familia ?? ''} ${r.direccion ?? ''} ${r.barrio_zona ?? ''} ${r.fecha_de_carga ?? ''} ${formatFecha(r.fecha_de_carga)}`;
+      const texto = `${r.nombre} ${r.barrio} ${formatFecha(r.fecha)}`;
       const matchSearch = clean(texto).includes(clean(searchTerm));
-      // Por ahora todos son "Pendiente" hasta que implementemos estado de revisión
-      const matchStatus = statusFilter === 'Todos' || r.estado === statusFilter || 
+      const matchStatus = statusFilter === 'Todos' || r.estado === statusFilter ||
         (statusFilter === 'Pendiente' && !r.estado);
       return matchSearch && matchStatus;
     });
   }, [data, searchTerm, statusFilter]);
 
-  const totalPages     = Math.ceil(filteredSurveys.length / ITEMS_PER_PAGE) || 1;
+  const totalPages      = Math.ceil(filteredSurveys.length / ITEMS_PER_PAGE) || 1;
   const safeCurrentPage = currentPage > totalPages ? 1 : currentPage;
 
   const displayed = useMemo(() => {
@@ -61,13 +60,10 @@ const SurveyList = () => {
         {displayed.map((r) => (
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={r._id}>
             <SurveyCard
-              id={r._id}             // ← ahora es el ID real de Airtable
-              title={
-                  r.campos?.p1_familia?.trim() ||
-                  r.campos?.p4_familia?.trim() ||
-                  'Sin nombre'
-                }
-              description={`${r.campos?.p1_barrio_zona ?? 'sin barrio'} · ${formatFecha(r.campos?.fecha_subida) ?? 'sin fecha'}`}
+              id={r._id}
+              title={r.nombre}
+              description={`${r.barrio || 'sin barrio'} · ${formatFecha(r.fecha)}`}
+              priority={r.prioridad}
               status={
                 r.estado === 'Revisado' ? 'Revisado' :
                 r.estado === 'Rechazado' ? 'Rechazado' :

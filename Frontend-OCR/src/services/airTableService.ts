@@ -96,7 +96,7 @@ function aplanarRegistro(record: any): Relevamiento {
     tiene_bano:           f['Tiene baño']           ?? null,
     fecha_de_carga:       f['Fecha de carga']        ?? null,
     ultima_modificacion:  f['Última modificación']   ?? null,
-    estado:               f['Estado']              ?? null,
+    estado:               f['Estado']                ?? null,
     campos,
   };
 }
@@ -160,4 +160,61 @@ export async function updateRelevamiento(id: string, fields: Record<string, any>
   }
 
   return aplanarRegistro(await res.json());
+}
+
+// ─── Preview (carga liviana para la lista) ────────────────────────────────────
+export interface RelevamientoPreview {
+  _id:          string;
+  nombre:       string;
+  barrio:       string;
+  fecha:        string | null;
+  prioridad:    string | null;
+  estado:       string | null;
+}
+
+const PREVIEW_FIELDS = [
+  'p1_familia',
+  'p4_familia',
+  'p1_barrio_zona',
+  'fecha_subida',
+  'p3_prioridad',
+  'Estado',
+];
+
+function buildFieldsQuery(fields: string[]): string {
+  return fields.map(f => `fields[]=${encodeURIComponent(f)}`).join('&');
+}
+
+function aplanarPreview(record: any): RelevamientoPreview {
+  const f = record.fields;
+  return {
+    _id:       record.id,
+    nombre:    f['p1_familia'] || f['p4_familia'] || 'Sin nombre',
+    barrio:    f['p1_barrio_zona'] ?? '',
+    fecha:     f['fecha_subida'] ?? null,
+    prioridad: f['p3_prioridad'] ?? null,
+    estado:    f['Estado'] ?? null,  
+  };
+}
+
+export async function fetchRelevamientosPreview(): Promise<RelevamientoPreview[]> {
+  let todos: RelevamientoPreview[] = [];
+  let offset: string | null = null;
+  const fieldsQuery = buildFieldsQuery(PREVIEW_FIELDS);
+
+  do {
+    const url = offset
+      ? `${BASE_URL}?${fieldsQuery}&offset=${offset}`
+      : `${BASE_URL}?${fieldsQuery}`;
+    const res = await fetch(url, { headers: HEADERS });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(`Airtable error: ${err.error?.message ?? res.status}`);
+    }
+    const data = await res.json();
+    todos = [...todos, ...data.records.map(aplanarPreview)];
+    offset = data.offset ?? null;
+  } while (offset);
+
+  return todos;
 }

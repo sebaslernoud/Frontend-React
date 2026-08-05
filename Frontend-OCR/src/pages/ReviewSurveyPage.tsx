@@ -1,12 +1,13 @@
 // src/pages/ReviewSurveyPage.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Grid, Typography, Button,
   Snackbar, Alert, CircularProgress
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
 import scannedFormImg from '../assets/ejemplo_formulario.png';
 import SurveySummaryCard from '../components/Survey/SurveySummaryCard';
 import DocumentViewer from '../components/Survey/DocumentViewer';
@@ -15,12 +16,14 @@ import { useRelevamientoById } from '../hooks/useRelevamientos';
 import { updateRelevamiento } from '../services/airTableService';
 import { saveSurveyToSheets } from '../services/googleSheetsService';
 
-// Campos que Airtable rechaza en PATCH (fórmulas, autonúmeros, campos calculados)
+
 const AIRTABLE_READONLY_FIELDS = new Set([
   'Fecha de carga',
   'Última modificación',
   'ID_relevamiento',
 ]);
+
+type EstadoRevision = 'Pendiente' | 'Revisado' | 'Rechazado';
 
 function isBooleanTrue(v: any): boolean {
   return v === true || v === 'true';
@@ -33,14 +36,16 @@ export const ReviewSurveyPage: React.FC = () => {
   const { data, loading, error } = useRelevamientoById(id ?? '');
 
   const [camposEditados, setCamposEditados] = useState<Record<string, any>>({});
+  const [loadedId, setLoadedId]           = useState<string | null>(null);
   const [saving, setSaving]               = useState(false);
   const [toastMessage, setToastMessage]   = useState('');
   const [toastSeverity, setToastSeverity] = useState<'success' | 'info' | 'error'>('success');
   const [showToast, setShowToast]         = useState(false);
 
-  useEffect(() => {
-    if (data) setCamposEditados({ ...data.campos });
-  }, [data]);
+  if (data && loadedId !== id) {
+    setCamposEditados({ ...data.campos });
+    setLoadedId(id ?? null);
+  }
 
   const showFeedback = (message: string, severity: 'success' | 'info' | 'error') => {
     setToastMessage(message);
@@ -52,31 +57,42 @@ export const ReviewSurveyPage: React.FC = () => {
     setCamposEditados(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = async () => {
+  // Guarda todos los campos en Airtable + Sheets. Opcionalmente cambia el Estado.
+  const persistirCambios = async (
+    nuevoEstado?: EstadoRevision,
+    mensajeExito?: string,
+  ) => {
     if (!id || !data) return;
     setSaving(true);
     try {
-      // Enviar todos los campos, filtrando solo los read-only de Airtable
       const fields: Record<string, any> = {};
       for (const [key, value] of Object.entries(camposEditados)) {
         if (!AIRTABLE_READONLY_FIELDS.has(key)) {
           fields[key] = value;
         }
       }
+      if (nuevoEstado) {
+        fields['Estado'] = nuevoEstado;
+      }
 
-      // Guardar en Airtable
       await updateRelevamiento(data._id, fields);
-
-      // Guardar en Google Sheets (p1+p2 → Inspeccion Tecnica, p3+p4 → Encuesta)
       await saveSurveyToSheets(camposEditados);
 
-      showFeedback('Cambios guardados correctamente', 'success');
+      showFeedback(mensajeExito ?? 'Cambios guardados correctamente', 'success');
     } catch (err: any) {
       showFeedback(`Error al guardar: ${err.message}`, 'error');
     } finally {
       setSaving(false);
     }
   };
+
+  const handleSave = () => persistirCambios();
+
+  const handleMarcarRevisado = () =>
+    persistirCambios('Revisado', 'Encuesta marcada como Revisado');
+
+  const handleRechazar = () =>
+    persistirCambios('Rechazado', 'Encuesta marcada como Rechazado');
 
   if (loading) return (
     <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
@@ -101,7 +117,7 @@ export const ReviewSurveyPage: React.FC = () => {
   return (
     <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
 
-      <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Button
           startIcon={<ArrowBackIcon />}
           onClick={() => navigate('/encuestas')}
@@ -110,6 +126,27 @@ export const ReviewSurveyPage: React.FC = () => {
         >
           Volver a Encuestas pendientes
         </Button>
+
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<CancelIcon />}
+            onClick={handleRechazar}
+            disabled={saving}
+          >
+            Rechazar
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            startIcon={<CheckCircleIcon />}
+            onClick={handleMarcarRevisado}
+            disabled={saving}
+          >
+            Marcar como Revisado
+          </Button>
+        </Box>
       </Box>
 
       <Typography variant="h4" component="h1" sx={{
